@@ -1,0 +1,32 @@
+# spring-boot-docker/docker-compose.yml
+networks:
+  spring-boot-mysql-network:
+    driver: bridge
+services:
+  mysql-service:
+    image: mysql:5.7
+    networks:
+      - spring-boot-mysql-network
+    restart: always
+    ports:
+      - "3306:3306"
+    expose:
+      - 3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=fiap@123
+      - MYSQL_DATABASE=parking
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+  web-service:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - spring-boot-mysql-network
+    depends_on:
+      mysql-service:
+        condition: service_healthy
