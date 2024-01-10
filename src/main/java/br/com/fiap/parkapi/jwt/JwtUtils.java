@@ -80,7 +80,7 @@ public class JwtUtils {
 
     private static String refactorToken(String token) {
         if(token.contains(JWT_BEARER)){
-            return token.substring(JWT_BEARER.length());
+            return token.substring(JWT_BEARER.length()).trim();
         }
         return token;
     }
