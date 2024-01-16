@@ -17,11 +17,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Usuarios", description = "Contém todos os recursos para manter um usuário")
+
+@Tag(name = "Usuarios", description = "Contém todas as operações relativas aos recursos para cadastro, edição e leitura de um usuário.")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/v1/usuarios")
@@ -70,7 +72,8 @@ public class UsuarioController {
             })
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioCreateResponseDto> geyById(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN') OR ( hasRole('CLIENTE') AND #id == authentication.principal.id)")
+    public ResponseEntity<UsuarioCreateResponseDto> getById(@PathVariable Long id) {
         Usuario user = usuarioService.buscarPorId(id);
         return ResponseEntity.ok(UsuarioMapper.toDto(user));
     }
@@ -101,6 +104,7 @@ public class UsuarioController {
             }
     )
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENTE') AND (#id == authentication.principal.id)")
     public ResponseEntity<Void> UpdatePassword(@PathVariable Long id, @Valid @RequestBody UsuarioSenhaRequestDto passUser) {
         Usuario user = usuarioService.editarSenha(id, passUser.getSenhaAtual(),
                 passUser.getNovaSenha(), passUser.getConfirmaSenha());
