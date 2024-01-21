@@ -150,18 +150,48 @@ public class UsuarioIT {
 
     @Test
     public void buscarUsuario_ComIdCorreto_ReturnStatus200() {
-        UsuarioCreateResponseDto usuarioCreateResponseDto = webTestClient
+        UsuarioCreateResponseDto responseBody = webTestClient
                 .get()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient,"guizao@gmail.com", "123456789"))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(UsuarioCreateResponseDto.class)
                 .returnResult().getResponseBody();
 
-        Assertions.assertThat(usuarioCreateResponseDto).isNotNull();
-        Assertions.assertThat(usuarioCreateResponseDto.getId()).isEqualTo(100);
-        Assertions.assertThat(usuarioCreateResponseDto.getUsername()).isEqualTo("guizao@gmail.com");
-        Assertions.assertThat(usuarioCreateResponseDto.getRole()).isEqualTo("ADMIN");
+        Assertions.assertThat(responseBody).isNotNull();
+        Assertions.assertThat(responseBody.getId()).isEqualTo(100);
+        Assertions.assertThat(responseBody.getUsername()).isEqualTo("guizao@gmail.com");
+        Assertions.assertThat(responseBody.getRole()).isEqualTo("ADMIN");
+
+        responseBody = webTestClient
+                .get()
+                .uri("/api/v1/usuarios/102")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(UsuarioCreateResponseDto.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getId()).isEqualTo(102);
+        org.assertj.core.api.Assertions.assertThat(responseBody.getUsername()).isEqualTo("bob@gmail.com");
+        org.assertj.core.api.Assertions.assertThat(responseBody.getRole()).isEqualTo("CLIENTE");
+
+
+        responseBody = webTestClient
+                .get()
+                .uri("/api/v1/usuarios/102")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "bob@gmail.com", "123456789"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(UsuarioCreateResponseDto.class)
+                .returnResult().getResponseBody();
+
+        org.assertj.core.api.Assertions.assertThat(responseBody).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(responseBody.getId()).isEqualTo(102);
+        org.assertj.core.api.Assertions.assertThat(responseBody.getUsername()).isEqualTo("bob@gmail.com");
+        org.assertj.core.api.Assertions.assertThat(responseBody.getRole()).isEqualTo("CLIENTE");
     }
 
     @Test
@@ -169,6 +199,7 @@ public class UsuarioIT {
         ErrorMessage responseBody = webTestClient
                 .get()
                 .uri("/api/v1/usuarios/600")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient,"guizao@gmail.com", "123456789"))
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody(ErrorMessage.class)
@@ -180,10 +211,35 @@ public class UsuarioIT {
     }
 
     @Test
+    public void buscarUsuario_ComUsuarioClienteBuscandoOutroCliente_RetornarErrorMessageComStatus403() {
+        ErrorMessage responseBody = webTestClient
+                .get()
+                .uri("/api/v1/usuarios/103")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "bob@gmail.com", "123456789"))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        Assertions.assertThat(responseBody).isNotNull();
+        Assertions.assertThat(responseBody.getStatus()).isEqualTo(403);
+    }
+
+    @Test
     public void editarSenha_ComDadosValidos_ReturnStatus204() {
         webTestClient
                 .patch()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient,"guizao@gmail.com", "123456789"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new UsuarioSenhaRequestDto("123456789","999999999","999999999"))
+                .exchange()
+                .expectStatus().isNoContent();
+
+        webTestClient
+                .patch()
+                .uri("/api/v1/usuarios/102")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient,"bob@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UsuarioSenhaRequestDto("123456789","999999999","999999999"))
                 .exchange()
@@ -192,20 +248,34 @@ public class UsuarioIT {
     }
 
     @Test
-    public void editarSenha_ComIdInexistente_ReturnStatus404() {
+    public void editarSenha_ComUsuariosDiferentes_RetornarErrorMessageComStatus403() {
         ErrorMessage responseBody = webTestClient
                 .patch()
-                .uri("/api/v1/usuarios/00")
+                .uri("/api/v1/usuarios/0")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(new UsuarioSenhaRequestDto("123456789","999999999","999999999"))
+                .bodyValue(new UsuarioSenhaRequestDto("123456789", "999999999", "999999999"))
                 .exchange()
-                .expectStatus().isNotFound()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+       Assertions.assertThat(responseBody).isNotNull();
+       Assertions.assertThat(responseBody.getStatus()).isEqualTo(403);
+
+        responseBody = webTestClient
+                .patch()
+                .uri("/api/v1/usuarios/0")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "bob@gmail.com", "123456789"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new UsuarioSenhaRequestDto("123456789", "999999999", "999999999"))
+                .exchange()
+                .expectStatus().isForbidden()
                 .expectBody(ErrorMessage.class)
                 .returnResult().getResponseBody();
 
         Assertions.assertThat(responseBody).isNotNull();
-        Assertions.assertThat(responseBody.getStatus()).isEqualTo(404);
-
+        Assertions.assertThat(responseBody.getStatus()).isEqualTo(403);
     }
 
     @Test
@@ -213,6 +283,7 @@ public class UsuarioIT {
         ErrorMessage responseBody = webTestClient
                 .patch()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UsuarioSenhaRequestDto("","",""))
                 .exchange()
@@ -226,6 +297,7 @@ public class UsuarioIT {
         responseBody = webTestClient
                 .patch()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UsuarioSenhaRequestDto("123456789","12","12"))
                 .exchange()
@@ -239,6 +311,7 @@ public class UsuarioIT {
         responseBody = webTestClient
                 .patch()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UsuarioSenhaRequestDto("123456789","1233333333333333333333333","1233333333333333333333333"))
                 .exchange()
@@ -257,6 +330,7 @@ public class UsuarioIT {
         ErrorMessage responseBody = webTestClient
                 .patch()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UsuarioSenhaRequestDto("123456789", "123456787", "123456786"))
                 .exchange()
@@ -270,6 +344,7 @@ public class UsuarioIT {
         responseBody = webTestClient
                 .patch()
                 .uri("/api/v1/usuarios/100")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(new UsuarioSenhaRequestDto("123456788", "123456787", "123456787"))
                 .exchange()
@@ -286,6 +361,7 @@ public class UsuarioIT {
        List<UsuarioCreateResponseDto> responseBody = webTestClient
                 .get()
                 .uri("/api/v1/usuarios")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "guizao@gmail.com", "123456789"))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBodyList(UsuarioCreateResponseDto.class)
@@ -293,5 +369,20 @@ public class UsuarioIT {
 
         Assertions.assertThat(responseBody).isNotNull();
         Assertions.assertThat(responseBody.size()).isEqualTo(3);
+    }
+
+    @Test
+    public void listarUsuarios_ComUsuarioSemPermissao_RetornarErrorMessageComStatus403() {
+        ErrorMessage responseBody = webTestClient
+                .get()
+                .uri("/api/v1/usuarios")
+                .headers(JwtAuthentication.getHeaderAuthorization(webTestClient, "bob@gmail.com", "123456789"))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorMessage.class)
+                .returnResult().getResponseBody();
+
+        Assertions.assertThat(responseBody).isNotNull();
+        Assertions.assertThat(responseBody.getStatus()).isEqualTo(403);
     }
 }
