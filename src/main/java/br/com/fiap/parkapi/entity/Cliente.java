@@ -1,7 +1,5 @@
 package br.com.fiap.parkapi.entity;
-
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.*;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,69 +7,57 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
 @Entity
-@Table(name = "usuarios")
+@Table(name = "clientes")
 @EntityListeners(AuditingEntityListener.class)
-public class Usuario implements Serializable {
+public class Cliente implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
-    @Column(name = "username",nullable = false, unique = true,length = 100)
-    private String username;
-    @Column(name = "password", nullable = false, length = 200)
-    private String password;
+    @Column(name = "nome", nullable = false, length = 100)
+    private String nome;
+    @Column(name = "cpf", nullable = false, unique = true, length = 11)
+    private String cpf;
+    @Column(name = "tipo_pagamento", nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "role",nullable = false,length = 25)
-    private Role role = Role.ROLE_CLIENTE;
+    private TipoPagamento TipoPagamento;
+    @OneToOne
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 
     @CreatedDate
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;
-
     @LastModifiedDate
     @Column(name = "data_modificacao")
     private LocalDateTime dataModificacao;
-
     @CreatedBy
     @Column(name = "criado_por")
-    private  String criadoPor;
-
+    private String criadoPor;
     @LastModifiedBy
     @Column(name = "modificado_por")
     private String modificadoPor;
 
-    public enum Role {
-        ROLE_ADMIN, ROLE_CLIENTE
+    public enum TipoPagamento {
+        DEBITO, CREDITO, PIX
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Usuario usuario = (Usuario) o;
-        return Objects.equals(id, usuario.id);
+        Cliente cliente = (Cliente) o;
+        return Objects.equals(id, cliente.id);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Usuario{" +
-                "id=" + id +
-                '}';
     }
 }

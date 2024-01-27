@@ -1,0 +1,1 @@
+insert into usuarios (id,username,password, role) values (100,'admin@gmail.com', '$2a$10$vr6hRb/rx2rFyT4kERb8feyFFeVI78DV2T2CQ7iHxHeVdKKXVrHi2', 'ROLE_ADMIN');
