@@ -22,9 +22,9 @@ public class EstacionamentoResponseDto {
     private String cor;
     private String clienteCpf;
     private String recibo;
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataEntrada;
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dataSaida;
     private String vagaCodigo;
     private BigDecimal valor;

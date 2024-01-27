@@ -24,6 +24,9 @@ public class Cliente implements Serializable {
     private String nome;
     @Column(name = "cpf", nullable = false, unique = true, length = 11)
     private String cpf;
+    @Column(name = "tipo_pagamento", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TipoPagamento TipoPagamento;
     @OneToOne
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;
@@ -40,6 +43,10 @@ public class Cliente implements Serializable {
     @LastModifiedBy
     @Column(name = "modificado_por")
     private String modificadoPor;
+
+    public enum TipoPagamento {
+        DEBITO, CREDITO, PIX
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -35,7 +35,7 @@ public class ApiExceptionHandler {
     }
 
 
-    @ExceptionHandler({UsernameUniqueViolationException.class, CpfUniqueViolationException.class, CodigoUniqueViolationException.class})
+    @ExceptionHandler({UsernameUniqueViolationException.class, CpfUniqueViolationException.class,VeiculoNotFoundException.class ,CodigoUniqueViolationException.class})
     public ResponseEntity<ErrorMessage> uniqueViolationException(RuntimeException ex, HttpServletRequest request) {
         log.error("Api Error - ", ex);
         return ResponseEntity
@@ -64,6 +64,15 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(PasswordNotCheckException.class)
     public ResponseEntity<ErrorMessage> passwordNotCheckException(
+            RuntimeException ex, HttpServletRequest request) {
+        log.error("Api error", ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorMessage(request, HttpStatus.BAD_REQUEST, ex.getMessage()));
+    }
+
+    @ExceptionHandler(ParkingNotAllowedException.class)
+    public ResponseEntity<ErrorMessage> parkingNotAllowedException(
             RuntimeException ex, HttpServletRequest request) {
         log.error("Api error", ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

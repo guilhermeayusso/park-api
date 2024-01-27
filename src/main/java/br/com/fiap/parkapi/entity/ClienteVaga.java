@@ -33,6 +33,8 @@ public class ClienteVaga {
     private String modelo;
     @Column(name = "cor", nullable = false, length = 45)
     private String cor;
+    @Column(name = "checkout", nullable = false)
+    private boolean checkout;
     @Column(name = "data_entrada", nullable = false)
     private LocalDateTime dataEntrada;
     @Column(name = "data_saida")

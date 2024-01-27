@@ -22,6 +22,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -41,13 +43,16 @@ import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 @Tag(name = "Estacionamentos", description = "Operações de registro de entrada e saída de um veículo do estacionamento.")
 @RequiredArgsConstructor
 @RestController
+@Slf4j
 @RequestMapping("api/v1/estacionamentos")
 public class EstacionamentoController {
     private final EstacionamentoService estacionamentoService;
     private final ClienteVagaService clienteVagaService;
 
     @Operation(summary = "Operação de check-in", description = "Recurso para dar entrada de um veículo no estacionamento. " +
-            "Requisição exige uso de um bearer token. Acesso restrito a Role='ADMIN'",
+            "Requisição exige uso de um bearer token. Acesso restrito a Role='CLIENTE'" +
+            "Caso queira dar entrada para períodos fixos basta preencher dataSaida" +
+            "Caso queira dar entrada para períodos variáveis não preencher dataSaida",
             security = @SecurityRequirement(name = "security"),
             responses = {
                     @ApiResponse(responseCode = "201", description = "Recurso criado com sucesso",
@@ -67,8 +72,9 @@ public class EstacionamentoController {
                                     schema = @Schema(implementation = ErrorMessage.class)))
             })
     @PostMapping("/check-in")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<EstacionamentoResponseDto> checkin(@RequestBody @Valid EstacionamentoCreateDto dto) {
+
         ClienteVaga clienteVaga = ClienteVagaMapper.toClienteVaga(dto);
         estacionamentoService.checkIn(clienteVaga);
         EstacionamentoResponseDto responseDto = ClienteVagaMapper.toDto(clienteVaga);
@@ -83,7 +89,7 @@ public class EstacionamentoController {
             "pelo nº do recibo. Requisição exige uso de um bearer token.",
             security = @SecurityRequirement(name = "security"),
             parameters = {
-                @Parameter(in = PATH, name = "recibo", description = "Número do rebibo gerado pelo check-in")
+                    @Parameter(in = PATH, name = "recibo", description = "Número do rebibo gerado pelo check-in")
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "Recurso localizado com sucesso",
@@ -102,9 +108,9 @@ public class EstacionamentoController {
     }
 
     @Operation(summary = "Operação de check-out", description = "Recurso para dar saída de um veículo do estacionamento. " +
-            "Requisição exige uso de um bearer token. Acesso restrito a Role='ADMIN'",
+            "Requisição exige uso de um bearer token. Acesso restrito a Role='CLIENTE'",
             security = @SecurityRequirement(name = "security"),
-            parameters = { @Parameter(in = PATH, name = "recibo", description = "Número do rebibo gerado pelo check-in",
+            parameters = {@Parameter(in = PATH, name = "recibo", description = "Número do rebibo gerado pelo check-in",
                     required = true)
             },
             responses = {
@@ -120,7 +126,7 @@ public class EstacionamentoController {
                                     schema = @Schema(implementation = ErrorMessage.class)))
             })
     @PutMapping("/check-out/{recibo}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<EstacionamentoResponseDto> checkout(@PathVariable String recibo) {
         ClienteVaga clienteVaga = estacionamentoService.checkOut(recibo);
         EstacionamentoResponseDto dto = ClienteVagaMapper.toDto(clienteVaga);
@@ -165,7 +171,6 @@ public class EstacionamentoController {
     }
 
 
-
     @Operation(summary = "Localizar os registros de estacionamentos do cliente logado",
             description = "Localizar os registros de estacionamentos do cliente logado. " +
                     "Requisição exige uso de um bearer token.",
@@ -193,9 +198,7 @@ public class EstacionamentoController {
             })
     @GetMapping
     @PreAuthorize("hasRole('CLIENTE')")
-    public ResponseEntity<PageableDto> getAllEstacionamentosDoCliente(@AuthenticationPrincipal JwtUserDetails user,
-                                                                      @Parameter(hidden = true) @PageableDefault(
-                                                                              size = 5, sort = "dataEntrada",
+    public ResponseEntity<PageableDto> getAllEstacionamentosDoCliente(@AuthenticationPrincipal JwtUserDetails user, @Parameter(hidden = true) @PageableDefault(size = 5, sort = "dataEntrada",
                                                                               direction = Sort.Direction.ASC) Pageable pageable) {
 
         Page<ClienteVagaProjection> projection = clienteVagaService.buscarTodosPorUsuarioId(user.getId(), pageable);

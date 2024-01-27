@@ -15,4 +15,6 @@ public class ClienteCreateDto {
     @Size(min = 11, max = 11)
     @CPF
     private String cpf;
+    @Pattern(regexp = "DEBITO|CREDITO|PIX")
+    private String TipoPagamento;
 }
